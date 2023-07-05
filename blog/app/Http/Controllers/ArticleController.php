@@ -3,58 +3,59 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use App\Models\Article;
+
+
 
 class ArticleController extends Controller
 {
-    public function index():View
+    public function index(): View
     {
 
         // Recuperer depuis la BDD les articles
-        $articles = [
-            'articles' => [
-                [
-                    "id" => 1,
-                    "title" => "Architecture MVC",
-                    "content" => "Lorem ipsum mvc...",
-                    "user_id" => 3
-                ],
-                [
-                    "id" => 2,
-                    "title" => "Tailwind",
-                    "content" => "Lorem ipsum tw...",
-                    "user_id" => 1
-                ]
-            ]
-        ];
+        $articles = Article::all()->sortByDesc('created_at');
 
         // Retourner la vue avec les articles
-        return view('articles.index', $articles);
+        return view('articles.index', ['articles' => $articles]);
     }
 
-    public function show(string $id):View {
-        $articles = [
-            'articles' => [
-                [
-                    "id" => 1,
-                    "title" => "Architecture MVC",
-                    "content" => "Lorem ipsum mvc...",
-                    "user_id" => 3
-                ],
-                [
-                    "id" => 2,
-                    "title" => "Tailwind",
-                    "content" => "Lorem ipsum tw...",
-                    "user_id" => 1
-                ]
-            ]
-        ];  
+    public function show(Request $request): View {
+        $article = Article::find($request->id);
 
-        foreach($articles['article'] as $article) {
-            if($article["id"] == $id) {
-                return view('articles.show', $article);
-            } 
-        }
+        return view('articles.show', ['article' => $article]);
+    }
 
-        return view() //404
+    public function create(): View {
+        return view('articles.create');
+    }
+
+    public function store(Request $request): RedirectResponse {
+        
+        Article::create($request->all());
+        return redirect()->route('articles.index')
+                         ->with('success', 'Article ajouté.');
+        // Add input infos into bdd
+
+    }
+
+    public function edit(Request $request): View {
+        $article = Article::find($request->id);
+        return view('articles.edit', ['article' => $article]);
+    }
+
+    public function update(Request $request): RedirectResponse {
+        $article = Article::find($request->id);
+        $article->update($request->all());
+        return redirect()->route('articles.index')
+                         ->with('success', "Article $article->title édité.");
+    }
+
+    public function destroy(Request $request): RedirectResponse{
+        $article = Article::find($request->id);
+        $article->delete();
+        return redirect()->route('articles.index')
+                         ->with('success', "Article $article->title supprimé.");
     }
 }
